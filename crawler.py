@@ -8,6 +8,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+import time
+from datetime import datetime, timedelta
+import re
+
 from reporter import Reporter
 from summit import Summary
 
@@ -15,9 +19,12 @@ class Crawler:
     def __init__(self,url):
         self.url = url
         
-        self.buzzwords = ["malicious", "malware", "critical", "vulnerability", "RCE", "arbitrary", "code execution", "python", "pypi", "infect", "CVE", ]
+        self.buzzwords = ["malicious", "malware", "critical", "vulnerability", "RCE", "arbitrary", "code execution", "python", "pypi", "infect", "CVE", "go", "npm"]
         self.articles = {}
         
+        # defines how many days back to look for articles
+        self.days_back = 1
+                
         #selenium configuration
         self.options = Options()
         self.options.add_argument("--headless")
@@ -29,25 +36,60 @@ class Crawler:
         #import of summariser model
         self.summariser = Summary()
     
+    #def days_back(self):
+    
+    def extract_date(self, article):
+        try:
+            date =  article.find_element(By.CLASS_NAME, 'h-datetime')
+            match = re.search(r"[A-Za-z]{3} \d{2}, \d{4}", date.text)
+            if match:
+                return match.group(0)
+            else:
+                return "Date not found"
+        except Exception as e:
+            return f"Error extracting date: {e}"
+        
+    def check_date_in_range(self, date):
+        now = int(time.time())
+        seconds_back = self.days_back * 24 * 60 * 60
+        cutoff_time = now - seconds_back
+        
+        #convert date to epoch
+        dt = datetime.strptime(date, "%b %d, %Y")
+        epoch = int(dt.timestamp())
+        
+        if epoch >= cutoff_time:
+            return True # Date is within the specified range
+        else:
+            return False # article is older than specified range
+        
 
     def crawl_and_extract_h2s(self, element_class_name):    
         self.driver.get(self.url)
         articles = self.driver.find_elements(By.CLASS_NAME, 'story-link')
-        
+        #print(articles.text)
+        #exit(1)
         extracted_articles = []
         unique_articles = set()
         
         for article in articles:
             try:
                 title =article.find_element(By.CLASS_NAME, element_class_name) # class name to be removed and replace with parameter for maximum code reusabbility
-                link = article.get_attribute("href")
-                article_tuple = (title.text.strip(), link.strip())
+                #date = article.find_element(By.CLASS_NAME, 'h-datetime')
+                #self.extract_date(article)
                 
-                if article_tuple not in unique_articles and all(article_tuple):
-                    extracted_articles.append(article_tuple)
-                    unique_articles.add(article_tuple)
-                    #self.check_buzzwords(title, link)
-                    #self.follow_link(link)
+                if self.check_date_in_range(self.extract_date(article)):
+                    
+                    link = article.get_attribute("href")
+                    article_tuple = (title.text.strip(), link.strip())
+                    
+                    if article_tuple not in unique_articles and all(article_tuple):
+                        extracted_articles.append(article_tuple)
+                        unique_articles.add(article_tuple)
+                        #self.check_buzzwords(title, link)
+                        #self.follow_link(link)
+                else:
+                    print(f"Article {title.text} is older than {self.days_back} days, skipping...")
             except Exception as e:
                 print(f"Error extracting article: {e}")
         
