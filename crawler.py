@@ -19,7 +19,8 @@ class Crawler:
     def __init__(self,url):
         self.url = url
         
-        self.buzzwords = ["malicious", "malware", "critical", "vulnerability", "RCE", "arbitrary", "code execution", "python", "pypi", "infect", "CVE", "go", "npm"]
+        self.buzzwords = ["malicious", "malware", "critical", "vulnerability", " RCE ", "arbitrary", "code execution", "python", "pypi", "infect", "CVE", "go", "npm"]
+        self.important_information = ["CVE", "CVSS", "github"]
         self.articles = {}
         
         # defines how many days back to look for articles
@@ -63,6 +64,32 @@ class Crawler:
         else:
             return False # article is older than specified range
         
+    def extract_important_article_information(self, article):
+        info_found = {}
+        
+        cve_pattern = r'CVE-\d{4}-\d{4,7}' ##logic to extract CVE numbers
+        cvss_pattern = r'CVSS:\d\.\d'
+        github_pattern = r'https?://github\.com/[^\s\'"<>]+'
+        
+        for info in self.important_information:
+            if info == "CVE":
+                cves_found = re.findall(cve_pattern, article)
+                if cves_found:
+                    info_found[info] = cves_found
+            elif info == "CVSS":
+                cvss_found = re.findall(cvss_pattern, article)
+                if cvss_found:
+                    info_found[info] = cvss_found
+            elif info == "github":
+                github_links = re.findall(github_pattern, article)
+                if github_links:
+                    info_found[info] = github_links
+            else:
+                print(f"No information found for {info}")
+        
+        return info_found
+        
+        
 
     def crawl_and_extract_h2s(self, element_class_name):    
         self.driver.get(self.url)
@@ -90,6 +117,7 @@ class Crawler:
                         #self.follow_link(link)
                 else:
                     print(f"Article {title.text} is older than {self.days_back} days, skipping...")
+                    break
             except Exception as e:
                 print(f"Error extracting article: {e}")
         
@@ -107,7 +135,8 @@ class Crawler:
             buzz_str = ", ".join(f"\033[31m{buzz}\033[0m" for buzz in matched_buzzwords)
             print(f"Article of Interest: \033[36m{title}\033[0m -- flagged by buzzword(s): {buzz_str}")
         print()    
-                
+    
+    #is where content is extracted from link            
     def follow_link(self, link):
         self.driver.get(link)
 
@@ -123,6 +152,7 @@ class Crawler:
 
             if content:
                 try:
+                    important_info = self.extract_important_article_information(content)
                     summed_content = self.summariser.summarise_text(content)
                     #print(f"\nSUMMED CONTENT:\n{summed_content}")
                 except Exception as e:
@@ -138,7 +168,7 @@ class Crawler:
         # Update the article dictionary outside the try/except blocks
         for art in self.articles:
             if self.articles[art] == link:
-                self.articles[art] = {"Content": content, "Summary": summed_content}
+                self.articles[art] = {"Content": content, "Summary": summed_content, "Important Info": important_info, "link": link}
 
                 
     
