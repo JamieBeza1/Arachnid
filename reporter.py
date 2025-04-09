@@ -9,7 +9,11 @@ class Reporter:
         self.master_title = f"{self.date} - News Report"
         self.articles = articles
     
-    
+    def dedupe_extracted_information(self, important_info):
+        deduped_info = {}
+        for key, value in important_info.items():
+            deduped_info[key] = list(dict.fromkeys(value))
+        return deduped_info
         
     def generate_report(self):
         document = Document()
@@ -22,12 +26,14 @@ class Reporter:
             
             
             summary = content.get("Summary", "No summary available.")
-            document.add_paragraph(summary)
+            #original_content = content.get("Original Content", "No original content available.")
+            document.add_paragraph(f"Summary:\n {summary}")
+            #document.add_paragraph(f"original contnet: {original_content}")
             
-            important = content.get("Important",{})
+            important = content.get("Important Info",{})
             if important:
                 document.add_paragraph("Extracted Important Information:")
-                for key, value in important.items():
+                for key, value in self.dedupe_extracted_information(important).items():
                     for val in value:
                         document.add_paragraph(f"{key}: {val}", style="List Bullet")
                           

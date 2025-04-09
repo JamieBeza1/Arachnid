@@ -68,8 +68,8 @@ class Crawler:
         info_found = {}
         
         cve_pattern = r'CVE-\d{4}-\d{4,7}' ##logic to extract CVE numbers
-        cvss_pattern = r'CVSS:\d\.\d'
-        github_pattern = r'https?://github\.com/[^\s\'"<>]+'
+        cvss_pattern = r'CVSS(?: score)?:\s?\d\.\d'
+        github_pattern = r'(?:https?://)?github\.com/[^\s\'"<>]+'
         
         for info in self.important_information:
             if info == "CVE":
@@ -88,7 +88,10 @@ class Crawler:
                 print(f"No information found for {info}")
         
         return info_found
-        
+   
+#results = extract_important_article_information(text)
+    
+
         
 
     def crawl_and_extract_h2s(self, element_class_name):    
@@ -168,7 +171,7 @@ class Crawler:
         # Update the article dictionary outside the try/except blocks
         for art in self.articles:
             if self.articles[art] == link:
-                self.articles[art] = {"Content": content, "Summary": summed_content, "Important Info": important_info, "link": link}
+                self.articles[art] = {"Content": content, "Summary": summed_content, "Important Info": important_info, "link": link, "Original Content": content}
 
                 
     
