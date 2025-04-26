@@ -1,0 +1,4 @@
+To Do List:
+
+Include RSS feeds, so that use of selenium is minimised.
+Modularise the code. so that it can be used in other projects.
