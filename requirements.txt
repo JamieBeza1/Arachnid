@@ -1,7 +1,2 @@
-# Requirements file
-selenium==4.31.0
-requests==2.32.3
-python-docx==1.1.2
-transformers==4.51.0
-torch==2.6.0
-accelerate==1.6.0
+# Dependencies required to run the tool
+cloudscraper
