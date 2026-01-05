@@ -1,6 +1,7 @@
-import requests, cloudscraper, re
+import requests, cloudscraper, re, os, json
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timezone
+from fuzzywuzzy import fuzz
 
 from sanitisation import SanitiseArticles
         
@@ -80,16 +81,88 @@ class RSSParser:
             success, buzzword = SanitiseArticles.buzzwords_in_title(title)
             if success:
                 #print(f"BUZZWORD MATCHED ~~ {buzzword} ~~  :  {title}")
-                RSSDataCacher.create_id_string(title, item["pub_date"])
+                id_string = RSSDataCacher.create_id_string(title, item["pub_date"])
+                print(f"IDSTR: {id_string}")
+                CacheData.cacher(fingerprint=id_string, title=title, source="TheHackerNews")
                 #v, p = RSSDataCacher.infer_vendor_product_values(title)
                 #print(f"VENDOR:   {v} ::::: PRODUCT:   {p}")
-                data = FingerprintBuilder.build_fingerprint(title, item["pub_date"])
-                print(data)
+                #data = FingerprintBuilder.build_fingerprint(title, item["pub_date"])
+                #print(data)
                 
                 
             #else:
                 #print(f"REDUNDANT ARTICLE: {item["title"]}")            
+
+class CacheData:
+    project_root = os.getcwd()
+    #arachnid_dir = os.path.join(project_root, "arachnid")
+    root_cache = "./cache"
+    
+    def check_if_exists(self, directory):
+        if not os.path.exists(directory):
+            print(f"Directory not found... Creating Directory: {directory}")
+            full_path = os.path.join(os.getcwd, directory)
+            os.makedirs(full_path)
+
+    @classmethod
+    def directory_builder(cls, fingerprint):
+        parts = fingerprint.split(":")
+        dir_path = os.path.join(cls.project_root, "arachnid", "cache", *parts)
+
+        os.makedirs(dir_path, exist_ok=True)
+        json_path = os.path.join(dir_path, "articles.json")
+
+        if not os.path.exists(json_path):
+            with open(json_path, "w") as f:
+                json.dump({"articles": []}, f, indent=2)
+        return json_path
+
+        """
+        fingerprint = fingerprint.replace(":", "/")
+        full_path = os.path.join(str(self.project_root), "arachnid", "cache", str(fingerprint), "articles.json")
+        if not os.path.exists(full_path):
+            print(f"Directory not found... Creating Directory: {str(full_path)}")
+            os.makedirs(str(full_path))
+            print(f"Created Directory: {str(full_path)}")
+            return full_path
+        """
+    @staticmethod
+    def load_json(json_path):
+        with open(json_path, "r") as f:
+            return json.load(f)
         
+    @staticmethod
+    def write_json(json_path, data):
+        with open(json_path, "w") as f:
+            json.dump(data, f, indent=2)
+
+    @classmethod
+    def cacher(cls, fingerprint, title, source="unknown", threshold=85):
+        json_path = cls.directory_builder(fingerprint)
+        cache = cls.load_json(json_path)
+        comparer = TitleComparer()
+        cleaned_new = comparer.main(source, title)
+
+        for article in cache["articles"]:
+            score = (
+                0.5 * fuzz.token_set_ratio(cleaned_new, article["cleaned_title"]) +
+                0.3 * fuzz.token_sort_ratio(cleaned_new, article["cleaned_title"]) +
+                0.2 * (comparer.jaccard_similarity(cleaned_new, article["cleaned_title"]) * 100)
+            )
+            if score >= threshold:
+                print(f"[CACHE] Duplicate Detected: ({round(score, 2)}%) - SKIPPING")
+                return False
+        cache["articles"].append({
+            "raw_title": title,
+            "cleaned_title": cleaned_new,
+            "source": source,
+            #"ingested": datetime.now(timezone.utc).isoformat()
+        })
+
+        cls.write_json(json_path, cache)
+        print("[CACHE] New Article Added")
+        return True
+    
         
 class RSSDataCacher:
     vulnerability_indicators = ["vulnerability",
@@ -208,9 +281,9 @@ class RSSDataCacher:
         software_type = self.infer_software_type(title)
         
         #creates string from other methods
-        id_string = f"{threat_type}:{date}:{software_type}"
+        id_string = f"{threat_type}:{software_type}:{date}"
         print(f"HEADLINE:   {title}  :  ID string generated:   {id_string}")
-    
+        return id_string
     # tokenises word in title
     @classmethod   
     def tokeniser(self, title):
@@ -260,110 +333,152 @@ class RSSDataCacher:
         return vendor.lower(), product.lower()
         
 
-class FingerprintBuilder:
-    vulnerabiltiy_indicators = [
-        "vulnerability", "flaw", "cve", "cvss",
-        "bypass", "rce", "remote code execution",
-        "unauthenticated"
-    ]
+class TitleComparer:
+    """Script pipeline:
+    1) tokenises each word
+    2) removes bloat from the titles
+    3) normalises important attributes of each title
+    4) orders the set of tokens
+    5) converts tokens back to a string
+    6) compares titles based on the following algorithms:
+        - token set similarity
+        - token sort similarity
+        - jaccard similarity which looks at the union of two sets of keywords/tokens
+        - extracts capitalised words to compare as vendors/products are typically capitaised
+            -> bonus score awarded for capitalised values"""
 
-    malware_indicators = [
-        "malware", "worm", "trojan", "stealer",
-        "rat", "botnet", "backdoor", "loader"
-    ]
-    
-    ecosystems = {
-        "npm": ["npm", "node", "node.js", "javascript", "js"],
-        "pypi": ["pypi", "pip", "python", "wheel"],
-        "maven": ["maven", "java", "jar"],
-        "nuget": ["nuget", ".net", "dotnet", "c#"],
-        "docker": ["docker", "container", "image"],
-        "browser-ext": ["chrome", "firefox", "extension", "addon", "edge"],
+
+    titles = {
+        "BleepingComputer": "IBM warns of critical API Connect auth bypass vulnerability",
+        "TheHackerNews": "RondoDox Botnet Exploits Critical React2Shell Flaw to Hijack IoT Devices and Web Servers"
     }
-    
-    stopwords = {
-        "critical", "flaw", "malware", "vulnerability",
-        "attack", "exploits", "allows", "active",
-        "found", "using", "used", "allows"
+    #words that pad out the titles
+    generic_padding_words = {
+        "the","a","an","and","or","but","if","while","with","without",
+        "to","from","of","on","in","at","by","for","about","as","into",
+        "over","after","before","between","through","during","under",
+        "above","below","up","down","out","off","again","further",
+        "then","once","here","there","when","where","why","how",
+        "all","any","both","each","few","more","most","other","some",
+        "such","no","nor","not","only","own","same","so","than","too",
+        "very","can","will","just","should","now"
     }
-    """General pipeline consists of:
-    1) tokenising titles into words
-    2) sanitising tokens & stripping padded unnecessary words
-    3) alphabetically sorting tokens
-    4) creating id string of threat-type, ecosystem, date to store under
-    5) performing fuzzy lookup of similar keywords currently pre-existing in the json
-    """
-    
-    #tokenisation of titles into string arrays:
-    @staticmethod
-    def tokenise_string(title):
-        return re.findall(r"[A-Za-z][A-Za-z0-9\-]+", title)
-    
-    @staticmethod
-    def identify_nouns(title):
+
+    normalisations = {
+        "authentication": "auth",
+        "authorization": "auth",
+        "authorize": "auth",
+        "vulnerability": "vuln",
+        "flaw": "vuln",
+        "bypass": "bypass",
+        "extension": "extension",
+        "browser": "browser",
+        "package": "package",
+        "packages": "package",
+        "registry": "registry",
+        "malicious": "malware",
+        "trojan": "malware",
+        "worm": "malware",
+        "stealer": "malware"
+    }
+
+    # lower cases & tokenises each word
+    def tokenise_string(self, title):
+        title = title.lower()
+        return re.findall(r"[a-z0-9\-]+", title)    # use following regex for anything between spaces
+
+    # normalisation method
+    def normalise_tokens(self, tokens):
+        return [self.normalisations.get(tok, tok) for tok in tokens]
+
+    #strips out generic words
+    def strip_out_generic_words(self, tokens):
+        return [tok for tok in tokens if tok not in self.generic_padding_words]
+
+    # alphabetically orders strings to assist with fuzzy lookups later
+    def order_list(self, tokens):
+        return sorted(tokens)
+
+    def create_cleaned_string(self, list):
+        string = " ".join(str(word) for word in list)
+        return string
+
+    def main(self, source, title):
+        tokens = self.tokenise_string(title)
+        tokens = self.normalise_tokens(tokens)
+        tokens_stripped = self.strip_out_generic_words(tokens)
+        ordered_tokens = self.order_list(tokens_stripped)
+        new_string = self.create_cleaned_string(ordered_tokens)
+        
+        print(f"{source}:  {ordered_tokens}")
+        print(f"FORGED STRING: {new_string}")
+        return new_string
+        
+    def extract_capitalised_entities(self, title):
+        generic_capped_words = {"The", "A", "An", "And", "Or", "But", "To", "Of", "In"}
+        entities = set()
+        
+        for match in re.findall(r"\b(?:[A-Z][a-z0-9]+(?:-[A-Z][a-z0-9]+)*)(?:\s+[A-Z][a-z0-9]+(?:-[A-Z][a-z0-9]+)*)*", title):
+            words = match.split()
+            if words[0] not in generic_capped_words:
+                entities.add(match)
+        
+        # for entities that are all caps eg NPM, IBM, AWS etc...
+        for match in re.findall(r"\b[A-Z]{2,}\b", title):
+            entities.add(match)
             
-    
-    @staticmethod
-    def normalise(text):
-        text = text.lower()
-        text = re.sub(r"[^a-z0-9\s\-]", " ", text) 
-        text = re.sub(r"\s+", " ", text)
-        return text.strip()   
-    
-    @classmethod
-    def classify_threat(cls, title):
-        title = cls.normalise(title)
-        for k in cls.vulnerabiltiy_indicators:
-            if k in title:
-                return "V"
-        for k in cls.malware_indicators:
-            if k in title:
-                return "M"
-        return "U"
-    
-    
-    @classmethod
-    def detect_ecosystem(cls, title):
-        title = cls.normalise(title)
-        for eco, words in cls.ecosystems.items():
-            for w in words:
-                if w in title:
-                    return eco
-        return "unknown"
-    
-    
-    @classmethod
-    def extract_product_tokens(cls, title):
-        title = cls.normalise(title)
-        tokens = re.findall(r"[a-z][a-z0-9\-]{3,}", title)
-        return sorted(set(t for t in tokens if t not in cls.stopwords))
-    
-    @staticmethod
-    def time_bucket(pubdate):
-        dt = datetime.strptime(pubdate, "%a, %d %b %Y %H:%M:%S %z")
-        return dt.strftime("%Y-%W")  # year-week
+        return entities
+        
+    #print(strip_out_generic_words(tokenise_string(title)))
 
-    
-    @classmethod
-    def build_fingerprint(cls, title, pubdate):
-        threat = cls.classify_threat(title)
-        ecosystem = cls.detect_ecosystem(title)
-        tokens = cls.extract_product_tokens(title)
-        bucket = cls.time_bucket(pubdate)
 
-        payload = {
-            "t": threat,
-            "e": ecosystem,
-            "k": tokens,
-            "b": bucket
-        }
+    # ========== FUZZY SEARCHING SECTION ============= #
 
-        #raw = json.dumps(payload, sort_keys=True)
-        #return hashlib.sha256(raw.encode()).hexdigest()[:16]
-        threat_string = f"THREAT: {threat} | ECOSYSTEM: {ecosystem} | TOKENS: {tokens} | BUCKET: {bucket}"
-        return threat_string
-    
+    def score_capitalised_entity_overlap(self, entities_a, entities_b, boost=10):
+        matches = entities_a & entities_b
+        return len(matches) * boost, matches
+
+
+    def fuzzy_scoring(self, title1, title2, raw_title1, raw_title2):
+        #print(f"SIMILARITY SCORE: {fuzz.token_set_ratio(heading1, heading2)}")
+        base_score = (
+            0.5 * fuzz.token_set_ratio(title1,title2) +
+            0.3 * fuzz.token_sort_ratio(title1, title2) +
+            0.2 * (self.jaccard_similarity(title1,title2) * 100)
+        )
+        entries1 = self.extract_capitalised_entities(raw_title1)
+        entries2 = self.extract_capitalised_entities(raw_title2)
+        
+        boost, matches = self.score_capitalised_entity_overlap(entries1, entries2, boost=15)
+        
+        final_score = base_score + boost
+        
+        print(f"BASE SCORE: {round(base_score,2)}")
+        print(f"ENTITY MATCHES: {matches}")
+        print(f"BOOST: +{boost}")
+        print(f"FINAL SCORE: {final_score}")
+
+    # ========== Jacard similarity =========== # 
+
+    def jaccard_similarity(self, a, b):
+        set_a = set(a.split())
+        set_b = set(b.split())
+        
+        if not set_a or not set_b:
+            return 0.0
+        return len(set_a & set_b) / len(set_a | set_b)
+
+    def runner(self):
+        headers = []
+        raw_titles = []
+        
+        for name, title in self.titles.items():
+            raw_titles.append(title)
+            headers.append(self.main(name, title))
+        
+        self.fuzzy_scoring(headers[0], headers[1], raw_titles[0], raw_titles[1])
     
 if __name__=="__main__":
     parse = RSSParser("https://www.bleepingcomputer.com/feed/")
+    #parse = RSSParser("https://feeds.feedburner.com/TheHackersNews")
     parse.handle_xml()

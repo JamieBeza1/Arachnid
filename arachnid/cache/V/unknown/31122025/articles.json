@@ -1,0 +1,9 @@
+{
+  "articles": [
+    {
+      "raw_title": "Critical CVSS 9.8 Flaw Found in IBM API Connect Authentication System",
+      "cleaned_title": "8 9 api auth connect critical cvss found ibm system vuln",
+      "source": "TheHackerNews"
+    }
+  ]
+}

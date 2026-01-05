@@ -1,0 +1,9 @@
+{
+  "articles": [
+    {
+      "raw_title": "Critical n8n Flaw (CVSS 9.9) Enables Arbitrary Code Execution Across Thousands of Instances",
+      "cleaned_title": "9 9 across arbitrary code critical cvss enables execution instances n8n thousands vuln",
+      "source": "TheHackerNews"
+    }
+  ]
+}

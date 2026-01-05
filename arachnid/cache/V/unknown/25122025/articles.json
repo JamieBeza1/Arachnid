@@ -1,0 +1,9 @@
+{
+  "articles": [
+    {
+      "raw_title": "CISA Flags Actively Exploited Digiever NVR Vulnerability Allowing Remote Code Execution",
+      "cleaned_title": "actively allowing cisa code digiever execution exploited flags nvr remote vuln",
+      "source": "TheHackerNews"
+    }
+  ]
+}

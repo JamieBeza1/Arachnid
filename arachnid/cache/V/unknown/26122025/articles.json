@@ -1,0 +1,9 @@
+{
+  "articles": [
+    {
+      "raw_title": "Critical LangChain Core Vulnerability Exposes Secrets via Serialization Injection",
+      "cleaned_title": "core critical exposes injection langchain secrets serialization via vuln",
+      "source": "TheHackerNews"
+    }
+  ]
+}

@@ -17,7 +17,7 @@ from fuzzywuzzy import fuzz
 
 
 titles = {
-    "BleepingComputer": "IBM warns of critical API Connect auth bypass vulnerability",
+    "BleepingComputer": "RondoDox botnet exploits React2Shell flaw to breach Next.js servers",
     "TheHackerNews": "RondoDox Botnet Exploits Critical React2Shell Flaw to Hijack IoT Devices and Web Servers"
 }
 #words that pad out the titles
