@@ -1,0 +1,18 @@
+# File to specify files to exclued from git pushes
+
+
+# Python based files/folders
+__pycache__/
+.venv/
+venv/
+
+# Caching directory of the tool
+cache/
+
+# environment variable files
+*.env
+
+# Test files
+test/
+test.py
+

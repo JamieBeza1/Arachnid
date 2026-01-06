@@ -31,9 +31,20 @@ class RSSParser:
     def _get_xml(self):
         """This method attempts to get the xml from the rss url, checks if it looks like xml, 
         otherwise attempting to bypass antibot mechanisms"""
+        
+        # set a realistic User-Agent to try and bypass the antibot
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+            "Accept": "application/rss+xml,application/xml;q=0.9,*/*;q=0.8"
+        }
+        
         #xml = requests.get(self.url, timeout=10)
         try:
-            response = requests.get(self.url, timeout=10)
+            response = requests.get(self.url, headers=headers, timeout=10)
             response.raise_for_status()
             
             if self._looks_like_xml(response):
@@ -46,8 +57,9 @@ class RSSParser:
         try:
             # scraper module used to bypass antibot by simulating browser
             print("Attempting to bypass Anti-Bot...")
-            scraper = cloudscraper.create_scraper()
-            response = scraper.get(self.url, timeout=10)
+            #scraper = cloudscraper.create_scraper()
+            response = requests.get(self.url, headers=headers, timeout=10)
+            print(f"STATUS: {response.status_code}")
             response.raise_for_status()
             
             if self._looks_like_xml(response):
@@ -78,9 +90,10 @@ class RSSParser:
         """
         for item in self.extracted_data:
             title = item["title"]
+            body = item["description"]
             success, buzzword = SanitiseArticles.buzzwords_in_title(title)
             if success:
-                #print(f"BUZZWORD MATCHED ~~ {buzzword} ~~  :  {title}")
+                print(f"BUZZWORD MATCHED ~~ {buzzword} ~~  :  {title}\nDESCRIPTION: {body}")
                 id_string = RSSDataCacher.create_id_string(title, item["pub_date"])
                 print(f"IDSTR: {id_string}")
                 CacheData.cacher(fingerprint=id_string, title=title, source="TheHackerNews")
@@ -477,8 +490,10 @@ class TitleComparer:
             headers.append(self.main(name, title))
         
         self.fuzzy_scoring(headers[0], headers[1], raw_titles[0], raw_titles[1])
-    
+
+   
 if __name__=="__main__":
-    parse = RSSParser("https://www.bleepingcomputer.com/feed/")
-    #parse = RSSParser("https://feeds.feedburner.com/TheHackersNews")
+    #parse = RSSParser("https://www.bleepingcomputer.com/feed/")
+    parse = RSSParser("https://feeds.feedburner.com/TheHackersNews")
     parse.handle_xml()
+    

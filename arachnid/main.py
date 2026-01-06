@@ -17,4 +17,4 @@ def main():
     for site in sites:
         run(site)
     
-main()
+#main()

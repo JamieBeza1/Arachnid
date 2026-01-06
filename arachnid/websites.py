@@ -9,7 +9,7 @@ class Website:
     def fetch_and_parse_xml(self):
         """fetches XML and processes data"""
         self.rss_parser.handle_xml()
-        self.extracted_data = self.rss_parser.extracted_data
+        #self.extracted_data = self.rss_parser.extracted_data
         
         
 class HackerNews(Website):
