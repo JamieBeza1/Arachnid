@@ -1,5 +1,20 @@
-from arachnid.main import main
+import logging
+from arachnid.main import process_feed
+from logger import get_logger
 
+feeds = [
+    ("https://feeds.feedburner.com/TheHackersNews", "TheHackerNews"),
+    ("https://www.bleepingcomputer.com/feed/", "BleepingComputer"),
+]
+
+def main():
+    for url, name in feeds:
+        #try:
+        process_feed(url, name)
+        #except Exception as e:
+        #    print(f"[ERROR] {name}: {e}")
+            
+            
 if __name__=="__main__":
     main()
     
