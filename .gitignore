@@ -7,7 +7,7 @@ __pycache__/
 venv/
 
 # Caching directory of the tool
-cache/
+arachnid/cache/
 
 # environment variable files
 *.env
