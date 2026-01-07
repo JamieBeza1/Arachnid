@@ -3,16 +3,7 @@ from arachnid.logger import get_logger
 
 logger = get_logger(__name__, logging.DEBUG)
 
-def print_ascii_art():
-    art_path = os.path.join(os.path.dirname(__file__), "resources","arachnid_art.txt")
-    try:
-        with open(art_path, "r") as f:
-            art = f.read()
-        print(art)
-        time.sleep(1)
-    except FileNotFoundError:
-        logger.warning("ASCII art file not found!")
-
+# spider descend ascii animation
 def spider_descend(delay=0.15, steps=10):
     art_file = os.path.join(os.path.dirname(__file__), "resources","arachnid_art.txt")
 
@@ -22,7 +13,8 @@ def spider_descend(delay=0.15, steps=10):
         os.system("cls" if os.name == "nt" else "clear")
         
         for _ in range(step):
-            print("                              |")
+            # sting for webbing
+            print("     |                        |                     |")
 
         for line in art_lines:
             print(line.rstrip())
@@ -31,6 +23,7 @@ def spider_descend(delay=0.15, steps=10):
     print_arachnid_title()
     time.sleep(3)
 
+# prints tool name art and banner
 def print_arachnid_title():
     art_file = os.path.join(os.path.dirname(__file__), "resources","arachnid_text_art.txt")
 

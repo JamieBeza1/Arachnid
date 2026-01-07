@@ -21,11 +21,12 @@ class SanitiseArticles:
         "remote code execution",
         "arbitrary code execution",
         "10.0",
+        "9."
     ]
         
     @classmethod
     def buzzwords_in_title(clss, title):
-        #print(title)
+        # checks if buzzword is in the title
         for buzz in clss.buzzwords: 
             if buzz in title.lower():
                 logger.info(f"Keyword '{buzz.upper()}' found in title: {title}")

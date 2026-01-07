@@ -5,7 +5,7 @@ logger = get_logger(__name__, logging.DEBUG)
 
 
 class RSSFetcher:
-    
+    # sets user agent to bypass Cloudflare antibot mechs
     defualt_headers = {
         "User-Agent": (
             "Mozilla/5.0 (X11; Linux x86_64) "
@@ -18,6 +18,7 @@ class RSSFetcher:
     @staticmethod
     def looks_like_xml(response):
         content_type = response.headers.get("Content-Type", "").lower()
+        # Checks if the content appears to be xml, as antibot pages are NOT
         if "xml" in content_type:
             return True
         return response.text.lstrip().startswith("<?xml")
@@ -27,8 +28,12 @@ class RSSFetcher:
         logger.info(f"Fetching RSS feed from URL: {url}")
         try:
             response = requests.get(url, headers=cls.defualt_headers, timeout=timeout)
+            
+            #checks http status code is successful ie in range 200-299, otherwise raising error
             response.raise_for_status()
+            
             logger.info(f"Successfully fetched feed: {url}")
+            
         except requests.RequestException as e:
             logger.error(f"Failed to fetch RSS feed from {url}: {e}")
             raise

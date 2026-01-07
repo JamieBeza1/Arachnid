@@ -11,7 +11,9 @@ feeds = [
 
 logger = get_logger(__name__,logging.DEBUG)
 
+# main entry point to run full scripts from
 def main():
+    # iterates each url in feed
     for url, name in feeds:
         try:
             logger.info(f"Processing feed {name}")

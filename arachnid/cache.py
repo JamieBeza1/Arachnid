@@ -22,7 +22,7 @@ class Cache:
         return json_path        
     
     @classmethod
-    def exists(cls, fingerprint, title, threshold=85):
+    def exists(cls, fingerprint, title, threshold=80):
         json_path = cls.check_cache(fingerprint)
         with open(json_path) as f:
             cache = json.load(f)

@@ -6,13 +6,14 @@ from arachnid.logger import get_logger
 logger = get_logger(__name__, logging.DEBUG)
 
 class Parser:
+    # parser class to handle all xml parsing and article object creation
     def __init__(self, xml_bytes, source):
         self.xml = xml_bytes
         self.source = source
         
     def parse_xml(self):
         try:
-                
+            # gets root of xml    
             root = ET.fromstring(self.xml)
             logger.debug(f"XML Successfully parsed:")
         except ET.ParseError as e:
@@ -22,10 +23,11 @@ class Parser:
         if channel is None:
             logger.warning(f"No <channel> found in RSS feed's XML for source: {self.source}")
             raise
-        
+        # RSS feeds store articles under <item> XML tags
         items = channel.findall("item")
         logger.info(f"Found {len(items)} items in RSS feed from: {self.source}")
 
+        # iterates over each found article
         for item in items:
             title = item.findtext("title")
             link = item.findtext("link")
@@ -36,7 +38,8 @@ class Parser:
             if not title or not link:
                 logger.warning(f"skipping item with missing data: {self.source}")
                 continue
-
+            
+            # Creates article object to store data in    
             article = Article(
                 title=title,
                 link=link,

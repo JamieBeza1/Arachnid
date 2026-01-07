@@ -2,7 +2,7 @@
 
 import requests
 
-url = "https://www.bleepingcomputer.com/feed/"
+url = "https://www.bleepingcomputer.com/news/hardware/logitech-options-plus-g-hub-macos-apps-break-after-certificate-expires/"
 headers = {
             "User-Agent": (
                 "Mozilla/5.0 (X11; Linux x86_64) "
