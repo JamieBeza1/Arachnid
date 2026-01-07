@@ -1,5 +1,9 @@
+import logging
 import xml.etree.ElementTree as ET
 from arachnid.models import Article
+from arachnid.logger import get_logger
+
+logger = get_logger(__name__, logging.DEBUG)
 
 class Parser:
     def __init__(self, xml_bytes, source):
@@ -7,14 +11,38 @@ class Parser:
         self.source = source
         
     def parse_xml(self):
-        root = ET.fromstring(self.xml)
+        try:
+                
+            root = ET.fromstring(self.xml)
+            logger.debug(f"XML Successfully parsed:")
+        except ET.ParseError as e:
+            logger.error(f"Failed to parse XML for source: {self.source}")
+
         channel = root.find("channel")
+        if channel is None:
+            logger.warning(f"No <channel> found in RSS feed's XML for source: {self.source}")
+            raise
         
-        for item in channel.findall("item"):
-            yield Article(
-                title = item.findtext("title"),
-                link = item.findtext("link"),
-                description = item.findtext("description"),
-                pub_date=item.findtext("pubDate"),
-                source=self.source
+        items = channel.findall("item")
+        logger.info(f"Found {len(items)} items in RSS feed from: {self.source}")
+
+        for item in items:
+            title = item.findtext("title")
+            link = item.findtext("link")
+            description = item.findtext("description")
+            pub_date=item.findtext("pubDate")
+            source=self.source
+            
+            if not title or not link:
+                logger.warning(f"skipping item with missing data: {self.source}")
+                continue
+
+            article = Article(
+                title=title,
+                link=link,
+                description=description,
+                pub_date=pub_date,
+                source=source
             )
+            logger.debug(f"Creating Article Object: {title}")
+            yield article

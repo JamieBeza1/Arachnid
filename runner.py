@@ -1,21 +1,28 @@
 import logging
 from arachnid.main import process_feed
-from logger import get_logger
+from arachnid.logger import get_logger
+from arachnid.utils import print_ascii_art
 
+# feeds to search through
 feeds = [
     ("https://feeds.feedburner.com/TheHackersNews", "TheHackerNews"),
     ("https://www.bleepingcomputer.com/feed/", "BleepingComputer"),
 ]
 
+logger = get_logger(__name__,logging.DEBUG)
+
 def main():
     for url, name in feeds:
-        #try:
-        process_feed(url, name)
-        #except Exception as e:
-        #    print(f"[ERROR] {name}: {e}")
+        try:
+            logger.info(f"Processing feed {name}")
+            process_feed(url, name)
+        except Exception as e:
+            logger.critical(f"Fatal error processing {name}: {e}")
+            raise
             
             
 if __name__=="__main__":
+    print_ascii_art()
     main()
     
     

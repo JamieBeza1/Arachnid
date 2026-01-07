@@ -1,6 +1,8 @@
-import json, os
-#from fuzzywuzzy import fuzz
+import json, os, logging
+from arachnid.logger import get_logger
 from arachnid.comparer import TitleComparer
+
+logger = get_logger(__name__, logging.DEBUG)
 
 class Cache:
     root = os.path.join(os.getcwd(), "arachnid", "cache")
@@ -10,12 +12,13 @@ class Cache:
         parts = fingerprint.split(":")
         path = os.path.join(cls.root,*parts)
         os.makedirs(path, exist_ok=True)
+        logger.debug(f"Cache directory found at: {path}")
         
         json_path = os.path.join(path, "articles.json")
         if not os.path.exists(json_path):
             with open(json_path, "w") as f:
                 json.dump({"articles": []}, f, indent=2)
-        
+            logger.info(f"Created new cache file at: {json_path}")
         return json_path        
     
     @classmethod
@@ -26,12 +29,16 @@ class Cache:
         
         comparer = TitleComparer()
         cleaned = comparer.cleaner(title)
+
+        logger.debug(f"Checking cache for fingerprint: {fingerprint}")
         
         for article in cache["articles"]:
             score = comparer.scorer(cleaned, article["cleaned_title"])
+            logger.debug(f"Comparing to cached article: {article['cleaned_title']}")
             if score >= threshold:
+                logger.info(f"Duplicate detected for title: {title} (SCORE: {score}%)")
                 return True
-            
+        logger.debug(f"No Duplicates found for title: {title}") 
         return False
     
     @classmethod
@@ -49,3 +56,4 @@ class Cache:
         
         with open(json_path, "w") as f:
             json.dump(cache, f, indent=2)
+        logger.info(f"Added new article to cached file: {json_path} (DATA: {title})")

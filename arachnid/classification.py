@@ -1,4 +1,8 @@
+import logging
 from datetime import datetime
+from arachnid.logger import get_logger
+
+logger = get_logger(__name__, logging.DEBUG)
 
 class ArticleClassifier:
     vulnerability_indicators = ["vulnerability",
@@ -67,25 +71,36 @@ class ArticleClassifier:
     @classmethod
     def threat_type(cls, title):
         title = title.lower()
+        logger.debug(f"Determining threat type for title: {title}")
         if any(word in title for word in cls.vulnerability_indicators):
+            logger.info(f"Threat claasified as VULNERABILITY for title: {title}")
             return "V"
         if any(word in title for word in cls.malware_indicators):
+            logger.info(f"Threat classified as MALWARE for title: {title}")
             return "M"
+        logger.info(f"Threat classified as UNKNOWN for title: {title}")
         return "U"
     
     @staticmethod
     def date_stamp(pubdate):
         dt = datetime.strptime(pubdate,"%a, %d %b %Y %H:%M:%S %z")
-        return dt.strftime("%d%m%Y")
+        formatted_date = dt.strftime("%d%m%Y")
+        logger.debug(f"Formatted date: {pubdate} -> {formatted_date}")
+        return formatted_date
     
     @classmethod
     def software_type(cls, title):
         title = title.lower()
+        logger.info(f"Determinig software type fro: {title}")
         for name, data in cls.software_types.items():
             if any(word in title for word in data["indicators"]):
+                logger.info(f"Software Identified as '{name}' for title: {title}")
                 return name
+        logger.info(f"Software identified as 'unknown' for title: {title}")
         return "unknown"
     
     @classmethod
     def fingerprint(cls, title, pubdate):
-        return f"{cls.threat_type(title)}:{cls.software_type(title)}:{cls.date_stamp(pubdate)}"
+        fingerprint = f"{cls.threat_type(title)}:{cls.software_type(title)}:{cls.date_stamp(pubdate)}"
+        logger.info(f"Fingerprint generated for title: {title} ({fingerprint})")
+        return fingerprint
