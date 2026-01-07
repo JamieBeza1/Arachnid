@@ -1,7 +1,7 @@
 import logging
 from arachnid.main import process_feed
 from arachnid.logger import get_logger
-from arachnid.utils import print_ascii_art
+from arachnid.utils import spider_descend
 
 # feeds to search through
 feeds = [
@@ -22,7 +22,7 @@ def main():
             
             
 if __name__=="__main__":
-    print_ascii_art()
+    spider_descend()
     main()
     
     
