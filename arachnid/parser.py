@@ -2,6 +2,7 @@ import logging
 import xml.etree.ElementTree as ET
 from arachnid.models import Article
 from arachnid.logger import get_logger
+from arachnid.fetcher import HTMLFetcher
 
 logger = get_logger(__name__, logging.DEBUG)
 
@@ -31,13 +32,17 @@ class Parser:
         for item in items:
             title = item.findtext("title")
             link = item.findtext("link")
-            description = item.findtext("description")
+            #description = item.findtext("description")
             pub_date=item.findtext("pubDate")
             source=self.source
             
             if not title or not link:
                 logger.warning(f"skipping item with missing data: {self.source}")
                 continue
+            
+            # Obtains description from url
+            description = HTMLFetcher.get_html(link)
+            logger.critical(description)
             
             # Creates article object to store data in    
             article = Article(

@@ -38,8 +38,9 @@ class Cache:
         
         for article in cache["articles"]:
             # creates a score from the comparer scripts
-            score = comparer.scorer(cleaned, article["cleaned_title"])
-            logger.debug(f"Comparing to cached article: {article['cleaned_title']}")
+            to_compare_with = comparer.cleaner(article["title"])
+            score = comparer.scorer(cleaned, to_compare_with)
+            logger.debug(f"Comparing to cached article: {to_compare_with}")
             # checks if similarity score is above threshold
             if score >= threshold:
                 logger.info(f"Duplicate detected for title: {title} (SCORE: {score}%)")
@@ -48,17 +49,19 @@ class Cache:
         return False
     
     @classmethod
-    def add_title_to_cache(cls, fingerprint, title, source):
+    def add_title_to_cache(cls, fingerprint, title, source,link,description,pub_date):
         # path determined by fingerprint
         json_path = cls.check_cache(fingerprint)
         with open(json_path) as f:
             cache = json.load(f)
             
-        comparer = TitleComparer()
+        #comparer = TitleComparer()
         # appends new titles to json loaded
         cache["articles"].append({
-            "raw_title": title,
-            "cleaned_title":comparer.cleaner(title),
+            "title": title,
+            "link": link,
+            "description": description,
+            "pub_date": pub_date,
             "source": source
         })
         

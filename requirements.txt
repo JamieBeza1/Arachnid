@@ -1,2 +1,4 @@
 # Dependencies required to run the tool
 cloudscraper
+trafilatura
+fuzzywuzzy

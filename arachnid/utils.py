@@ -4,7 +4,7 @@ from arachnid.logger import get_logger
 logger = get_logger(__name__, logging.DEBUG)
 
 # spider descend ascii animation
-def spider_descend(delay=0.15, steps=10):
+def spider_descend(delay=0.2, steps=8):
     art_file = os.path.join(os.path.dirname(__file__), "resources","arachnid_art.txt")
 
     with open(art_file, "r") as f:
@@ -21,7 +21,8 @@ def spider_descend(delay=0.15, steps=10):
 
         time.sleep(delay)
     print_arachnid_title()
-    time.sleep(3)
+    print()
+    time.sleep(2)
 
 # prints tool name art and banner
 def print_arachnid_title():

@@ -1,18 +1,16 @@
-# File to specify files to exclued from git pushes
-
-
-# Python based files/folders
+# Python bytecode
 __pycache__/
-.venv/
-venv/
+*.pyc
 
-# Caching directory of the tool
+# Virtual environments
+venv/
+.venv/
+
+# Runtime cache
 arachnid/cache/
 
-# environment variable files
+# Environment variables
 *.env
 
-# Test files
-test/
-test.py
-
+# Logs
+*.log

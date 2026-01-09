@@ -36,6 +36,6 @@ def process_feed(url, source):
             continue
         
         # Calls caching function to add to /cache directory
-        Cache.add_title_to_cache(fingerprint,article.title, article.source)
+        Cache.add_title_to_cache(fingerprint,article.title, article.source, article.link, article.description, article.pub_date)
         logger.info(f"[{source}] New article cahced: {article.title}")
         
