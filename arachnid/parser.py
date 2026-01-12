@@ -42,7 +42,7 @@ class Parser:
             
             # Obtains description from url
             description = HTMLFetcher.get_html(link)
-            logger.critical(description)
+            logger.debug(description)
             
             # Creates article object to store data in    
             article = Article(

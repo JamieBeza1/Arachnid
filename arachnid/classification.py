@@ -1,4 +1,4 @@
-import logging
+import logging, re
 from datetime import datetime
 from arachnid.logger import get_logger
 
@@ -109,9 +109,31 @@ class ArticleClassifier:
         logger.info(f"Software identified as 'unknown' for title: {title}")
         return "unknown"
     
+    @staticmethod
+    def extract_version(title):
+        match = re.search(r"\b(v?\d+(\.\d+){1,3})\b", title.lower())
+        return match.group(1) if match else "unknown"
+    
+    @staticmethod
+    def extract_vendor(title):
+        known_vendors = [
+        "microsoft", "google", "apple", "veeam", "cisco", "fortinet",
+        "vmware", "docker", "npm", "python", "oracle", "n8n", "broadcom"
+        ]
+        
+        for vendor in known_vendors:
+            if vendor in title.lower():
+                return vendor
+        return "unknown"
+        
+    
     @classmethod
-    def fingerprint(cls, title, pubdate):
+    def fingerprint(cls, title):
         # creates fingerprint to save data under: FORMAT = <threat_type>:<software_type>:<date>
-        fingerprint = f"{cls.threat_type(title)}:{cls.software_type(title)}:{cls.date_stamp(pubdate)}"
+        vendor = cls.extract_vendor(title)
+        product = vendor
+        version = cls.extract_version(title)
+        
+        fingerprint = f"{vendor}:{product}:{version}"
         logger.info(f"Fingerprint generated for title: {title} ({fingerprint})")
         return fingerprint

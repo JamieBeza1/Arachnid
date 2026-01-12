@@ -20,7 +20,6 @@ def main():
             process_feed(url, name)
         except Exception as e:
             logger.critical(f"Fatal error processing {name}: {e}")
-            raise
             
             
 if __name__=="__main__":
