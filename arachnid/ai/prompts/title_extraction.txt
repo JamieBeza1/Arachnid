@@ -2,7 +2,7 @@ You extract software vendor and product names from cybersecurity news titles.
 
 Rules:
 - Use ONLY the title provided
-- Do NOT guess
+- Do NOT guess or assume any values
 - If unknown, return "unknown"
 - Output VALID JSON ONLY
 - No explanation
