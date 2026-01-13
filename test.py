@@ -1,39 +1,36 @@
-## Test file to run PoC scripts on before integration
-import trafilatura
-import requests
-#import xml.etree.ElementTree as ET
+import json,os
+from dotenv import load_dotenv
+from openai import OpenAI 
 
-"""
-NOTES
-next steps looking at integrating with ai
-when AI parses it it should extract vendor/product/version
-these details should then be added to the cache object and run more indepth checks aginst the article about ot be added
+load_dotenv()
+API_KEY = os.getenv("OPENAI_API_KEY")
 
-what should the AI receive:
-title
-description
+if not API_KEY:
+    raise RuntimeError("OPENAI_API_KEY not found in environment")
+client = OpenAI(api_key=API_KEY) 
 
-what output is expected:
-any CVE details
-name of software
-vendor of software
-software version
+MODEL = "gpt-5-nano" 
 
-"""
-url = "https://krebsonsecurity.com/feed/"
-headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0.0.0 Safari/537.36"
-            ),
-            "Accept": "application/rss+xml,application/xml;q=0.9,*/*;q=0.8"
-        }
+TITLE_PROMPT_PATH = "./arachnid/ai/prompts/title_extraction.txt" 
 
-def get(url):
-    xml = requests.get(url, headers, timeout=10)
-    return xml
+def get_prompt(prompt_path): 
+    if os.path.exists(prompt_path):
+        with open(prompt_path, "r") as f: 
+            data = f.read()
+            return data
+    
+title = "New n8n Vulnerability (9.9 CVSS) Lets Authenticated Users Execute System Commands" 
+
+def extract_from_title(title): 
+    resp = client.responses.create(
+        model=MODEL, 
+        instructions=get_prompt(TITLE_PROMPT_PATH), 
+        input=f"Return JSON only.\nTITLE:\n{title}", 
+        text={"format": {"type": "json_object"}}, ) 
+    return json.loads(resp.output_text) 
+
+print(f"ORIGINAL TITLE: {title}") 
+print(f"Extracted data: {extract_from_title(title)}")
 
 
-
-print(get(url=url))
+#print(get_prompt(TITLE_PROMPT_PATH))

@@ -2,3 +2,4 @@
 cloudscraper
 trafilatura
 fuzzywuzzy
+openai
