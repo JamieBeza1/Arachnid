@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from arachnid.ai.ai_runner import AIRunner
 from arachnid.logger import get_logger
 
 logger = get_logger(__name__, logging.DEBUG)
@@ -108,10 +109,15 @@ class ArticleClassifier:
                 return name
         logger.info(f"Software identified as 'unknown' for title: {title}")
         return "unknown"
-    
+
     @classmethod
     def fingerprint(cls, title, pubdate):
-        # creates fingerprint to save data under: FORMAT = <threat_type>:<software_type>:<date>
-        fingerprint = f"{cls.threat_type(title)}:{cls.software_type(title)}:{cls.date_stamp(pubdate)}"
-        logger.info(f"Fingerprint generated for title: {title} ({fingerprint})")
-        return fingerprint
+        json_data = AIRunner.title_summary(title)
+        logger.debug(f"Obtanied and extracted from ai - confidence: {json_data["confidence"]}")
+        if json_data["confidence"].lower() == "high":
+            # creates fingerprint to save data under: FORMAT = <threat_type>:<software_type>:<date>
+            fingerprint = f"{json_data["vendor"]}:{json_data["product"]}:{json_data["version"]}"
+            logger.info(f"Fingerprint generated for title: {title} ({fingerprint})")
+            return fingerprint
+        else:
+            return "unknown:unknown:unknown"

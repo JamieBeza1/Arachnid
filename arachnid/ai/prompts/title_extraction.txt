@@ -6,7 +6,7 @@ Rules:
 - If unknown, return "unknown"
 - Output VALID JSON ONLY
 - No explanation
-- Try to resolve the vendor name if not explicitly specificed
+- Try to resolve the vendor name of the affected software if not explicitly specificed
 - Confidence score should be based on how certain you are with the data you provided, including vendor resolving results.
 - Version must not be resolved, if unsure, or the data is not available, just put "unknown".
 
