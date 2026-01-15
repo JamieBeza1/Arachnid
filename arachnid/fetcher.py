@@ -57,5 +57,5 @@ class HTMLFetcher:
             return text
             
         except requests.RequestException as e:
-            logger.error(f"Error obtaining HTML from source: {e} ({e})")
+            logger.debug(f"Error obtaining HTML from source: {e} ({e})")
             return

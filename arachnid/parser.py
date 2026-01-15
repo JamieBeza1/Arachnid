@@ -4,7 +4,7 @@ from arachnid.models import Article
 from arachnid.logger import get_logger
 from arachnid.fetcher import HTMLFetcher
 
-logger = get_logger(__name__, logging.DEBUG)
+logger = get_logger(__name__, logging.INFO)
 
 class Parser:
     # parser class to handle all xml parsing and article object creation
@@ -42,7 +42,7 @@ class Parser:
             
             # Obtains description from url
             description = HTMLFetcher.get_html(link)
-            logger.critical(description)
+            logger.debug(description)
             
             # Creates article object to store data in    
             article = Article(

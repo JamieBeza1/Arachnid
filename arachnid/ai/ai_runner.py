@@ -20,8 +20,8 @@ logger = get_logger(__name__, logging.DEBUG)
 client = OpenAI(api_key=API_KEY)
 
 MODEL = "gpt-5-nano"
-TITLE_PROMPT_PATH = "/home/appsec/arachnid/arachnid/ai/prompts/title_extraction.txt"
-TITLE = "New n8n Vulnerability (9.9 CVSS) Lets Authenticated Users Execute System Commands" 
+TITLE_PROMPT_PATH = f"{os.getcwd()}/arachnid/ai/prompts/title_extraction.txt"
+#TITLE = "New n8n Vulnerability (9.9 CVSS) Lets Authenticated Users Execute System Commands" 
 
 class AIRunner:
     MODEL = "gpt-5-nano"
@@ -33,8 +33,8 @@ class AIRunner:
             with open(prompt_location, "r") as f:
                 data = f.read()
             return data
-        except FileNotFoundException as E:
-            logger.error(f"No prompt found: {prompt_location}")
+        except FileNotFoundError as e:
+            logger.error(f"No prompt found: {prompt_location} - ({e})")
 
     @classmethod
     def send_data(cls, title, prompt):
