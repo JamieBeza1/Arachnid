@@ -1,7 +1,7 @@
 ## Mermaid diagrams VSCode
 
 ```mermaid
-flowchart TD
+flowchart LR
     A[Run: python3 runner.py] --> B[spider_descend animation]
     B --> C[Load RSS feeds list]
     C --> D{For each feed URL}
