@@ -2,3 +2,6 @@
 cloudscraper
 trafilatura
 fuzzywuzzy
+openai
+python-dotenv
+pathlib
